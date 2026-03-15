@@ -9,6 +9,8 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 
+print("🚀 Démarrage du serveur...")
+
 # ==============================
 # CONFIGURATION EMAIL
 # ==============================
@@ -17,8 +19,13 @@ GMAIL_USER = os.environ.get("GMAIL_USER")
 GMAIL_PASSWORD = os.environ.get("GMAIL_PASSWORD")
 INTERNAL_EMAIL = os.environ.get("INTERNAL_EMAIL", GMAIL_USER)
 
+print("📧 Config chargée")
+print("➡️ GMAIL_USER:", GMAIL_USER)
+print("➡️ INTERNAL_EMAIL:", INTERNAL_EMAIL)
+
 if not GMAIL_USER or not GMAIL_PASSWORD:
-    raise Exception("GMAIL_USER et GMAIL_PASSWORD doivent être définis dans les variables d'environnement")
+    raise Exception("❌ GMAIL_USER ou GMAIL_PASSWORD manquant dans les variables d'environnement")
+
 
 # ==============================
 # EMAIL SMTP
@@ -26,19 +33,36 @@ if not GMAIL_USER or not GMAIL_PASSWORD:
 
 def send_email_smtp(to, subject, html_body):
 
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = subject
-    msg["From"] = f"PNT – Soins des tombes <{GMAIL_USER}>"
-    msg["To"] = to
+    print("📨 Tentative d'envoi d'email")
+    print("➡️ Destinataire:", to)
+    print("➡️ Sujet:", subject)
 
-    msg.attach(MIMEText(html_body, "html"))
+    try:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = f"PNT – Soins des tombes <{GMAIL_USER}>"
+        msg["To"] = to
 
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-        server.login(GMAIL_USER, GMAIL_PASSWORD)
-        server.sendmail(GMAIL_USER, to, msg.as_string())
+        msg.attach(MIMEText(html_body, "html"))
+
+        print("🔐 Connexion SMTP à Gmail...")
+
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+
+            print("🔑 Login Gmail...")
+            server.login(GMAIL_USER, GMAIL_PASSWORD)
+
+            print("📤 Envoi du mail...")
+            server.sendmail(GMAIL_USER, to, msg.as_string())
+
+        print("✅ Email envoyé avec succès")
+
+    except Exception as e:
+        print("❌ ERREUR SMTP :", str(e))
 
 
 def async_send(fn, *args):
+    print("🧵 Lancement du thread d'envoi email...")
     thread = threading.Thread(target=fn, args=args)
     thread.daemon = True
     thread.start()
@@ -49,6 +73,8 @@ def async_send(fn, *args):
 # ==============================
 
 def build_client_email(data):
+
+    print("🧱 Construction email client")
 
     total = data.get("price", 0)
 
@@ -125,6 +151,8 @@ Cordialement,<br>
 
 def build_internal_email(data):
 
+    print("🧱 Construction email interne")
+
     return f"""
 <html>
 <body style="font-family:Arial;background:#f5f5f5;padding:40px">
@@ -155,19 +183,33 @@ def build_internal_email(data):
 # ROUTES API
 # ==============================
 
+@app.route("/")
+def home():
+    return "PNT Email API running"
+
+
 @app.route("/api/health")
 def health():
-    return jsonify({"status":"ok"})
+    print("💚 Health check reçu")
+    return jsonify({"status": "ok"})
 
 
 @app.route("/api/send-client-email", methods=["POST"])
 def send_client_email():
 
+    print("📩 Requête reçue : /api/send-client-email")
+
     data = request.json
+    print("📦 Données reçues :", data)
 
     email = data.get("email")
 
+    if not email:
+        print("❌ Email manquant dans la requête")
+
     html = build_client_email(data)
+
+    print("📧 Email client prêt")
 
     async_send(
         send_email_smtp,
@@ -176,15 +218,22 @@ def send_client_email():
         html
     )
 
-    return jsonify({"status":"sent"})
+    print("🚀 Processus d'envoi lancé")
+
+    return jsonify({"status": "sent"})
 
 
 @app.route("/api/send-internal-email", methods=["POST"])
 def send_internal_email():
 
+    print("📩 Requête reçue : /api/send-internal-email")
+
     data = request.json
+    print("📦 Données reçues :", data)
 
     html = build_internal_email(data)
+
+    print("📧 Email interne prêt")
 
     async_send(
         send_email_smtp,
@@ -193,7 +242,9 @@ def send_internal_email():
         html
     )
 
-    return jsonify({"status":"sent"})
+    print("🚀 Processus d'envoi interne lancé")
+
+    return jsonify({"status": "sent"})
 
 
 # ==============================
@@ -201,5 +252,7 @@ def send_internal_email():
 if __name__ == "__main__":
 
     port = int(os.environ.get("PORT", 5000))
+
+    print("🌍 Lancement serveur sur port", port)
 
     app.run(host="0.0.0.0", port=port)
