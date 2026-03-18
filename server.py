@@ -1,10 +1,8 @@
 import os
-import smtplib
 import threading
 import traceback
 import logging
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
+import requests
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
@@ -14,18 +12,14 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 CORS(app, origins="*")
 
-SMTP_USER = os.environ.get("SMTP_USER", "")
-SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "")
-SMTP_HOST = os.environ.get("SMTP_HOST", "ssl0.ovh.net")
-SMTP_PORT = int(os.environ.get("SMTP_PORT", "465"))
-INTERNAL_EMAIL = os.environ.get("INTERNAL_EMAIL", SMTP_USER)
+RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
+FROM_EMAIL = os.environ.get("FROM_EMAIL", "contact@pnt-soinsdestombes.fr")
+INTERNAL_EMAIL = os.environ.get("INTERNAL_EMAIL", "contact@pnt-soinsdestombes.fr")
 
-logger.info(f"=== CONFIG SMTP ===")
-logger.info(f"SMTP_HOST: {SMTP_HOST}")
-logger.info(f"SMTP_PORT: {SMTP_PORT}")
-logger.info(f"SMTP_USER: {SMTP_USER}")
-logger.info(f"SMTP_PASSWORD: {'***' if SMTP_PASSWORD else 'NON DÉFINI !!!'}")
+logger.info(f"=== CONFIG RESEND ===")
+logger.info(f"FROM_EMAIL: {FROM_EMAIL}")
 logger.info(f"INTERNAL_EMAIL: {INTERNAL_EMAIL}")
+logger.info(f"RESEND_API_KEY: {'***' if RESEND_API_KEY else '❌ NON DÉFINI !!!'}")
 
 CEMETERY_LABELS = {
     "fontaine_les_dijon": "Fontaine-lès-Dijon",
@@ -47,29 +41,29 @@ PARTICULARITY_LABELS = {
     "pierres_delicates": "Pierres délicates",
 }
 
-def send_email_smtp(to, subject, html_body):
-    logger.info(f"[SMTP] Tentative envoi vers: {to} | Sujet: {subject}")
-    logger.info(f"[SMTP] Connexion à {SMTP_HOST}:{SMTP_PORT} avec {SMTP_USER}")
+def send_email_resend(to, subject, html_body):
+    logger.info(f"[RESEND] Tentative envoi vers: {to} | Sujet: {subject}")
     try:
-        msg = MIMEMultipart("alternative")
-        msg["Subject"] = subject
-        msg["From"] = f"PNT – Soins des tombes <{SMTP_USER}>"
-        msg["To"] = to
-        msg.attach(MIMEText(html_body, "html"))
-        with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT) as server:
-            logger.info(f"[SMTP] Connexion SSL établie")
-            server.login(SMTP_USER, SMTP_PASSWORD)
-            logger.info(f"[SMTP] Login réussi")
-            server.sendmail(SMTP_USER, to, msg.as_string())
-            logger.info(f"[SMTP] ✅ Email envoyé avec succès à {to}")
-    except smtplib.SMTPAuthenticationError as e:
-        logger.error(f"[SMTP] ❌ ERREUR AUTHENTIFICATION: {e}")
-        traceback.print_exc()
-    except smtplib.SMTPConnectError as e:
-        logger.error(f"[SMTP] ❌ ERREUR CONNEXION: {e}")
-        traceback.print_exc()
+        response = requests.post(
+            "https://api.resend.com/emails",
+            headers={
+                "Authorization": f"Bearer {RESEND_API_KEY}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "from": f"PNT – Soins des tombes <{FROM_EMAIL}>",
+                "to": [to],
+                "subject": subject,
+                "html": html_body,
+            },
+            timeout=30,
+        )
+        if response.status_code in (200, 201):
+            logger.info(f"[RESEND] ✅ Email envoyé avec succès à {to} | ID: {response.json().get('id')}")
+        else:
+            logger.error(f"[RESEND] ❌ Erreur {response.status_code}: {response.text}")
     except Exception as e:
-        logger.error(f"[SMTP] ❌ ERREUR INCONNUE: {e}")
+        logger.error(f"[RESEND] ❌ ERREUR INCONNUE: {e}")
         traceback.print_exc()
 
 def build_client_email(data):
@@ -229,7 +223,7 @@ def send_client_email():
         logger.error("[API] ❌ Email manquant dans la requête")
         return jsonify({"error": "Email manquant"}), 400
     html = build_client_email(data)
-    async_send(send_email_smtp, to, "✅ Votre demande de devis – PNT Soins des tombes", html)
+    async_send(send_email_resend, to, "✅ Votre demande de devis – PNT Soins des tombes", html)
     logger.info(f"[API] Thread email client lancé pour {to}")
     return jsonify({"status": "sent"}), 200
 
@@ -241,7 +235,7 @@ def send_internal_email():
     html = build_internal_email(data)
     name = f"{data.get('first_name','')} {data.get('last_name','')}".strip() or "Inconnu"
     logger.info(f"[API] /send-internal-email reçu | client: {name} | destinataire interne: {INTERNAL_EMAIL}")
-    async_send(send_email_smtp, INTERNAL_EMAIL, f"🔔 Nouvelle demande – {name}", html)
+    async_send(send_email_resend, INTERNAL_EMAIL, f"🔔 Nouvelle demande – {name}", html)
     logger.info(f"[API] Thread email interne lancé vers {INTERNAL_EMAIL}")
     return jsonify({"status": "sent"}), 200
 
