@@ -1,10 +1,15 @@
 import os
 import smtplib
 import threading
+import traceback
+import logging
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 CORS(app, origins="*")
@@ -14,6 +19,13 @@ SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "")
 SMTP_HOST = os.environ.get("SMTP_HOST", "ssl0.ovh.net")
 SMTP_PORT = int(os.environ.get("SMTP_PORT", "465"))
 INTERNAL_EMAIL = os.environ.get("INTERNAL_EMAIL", SMTP_USER)
+
+logger.info(f"=== CONFIG SMTP ===")
+logger.info(f"SMTP_HOST: {SMTP_HOST}")
+logger.info(f"SMTP_PORT: {SMTP_PORT}")
+logger.info(f"SMTP_USER: {SMTP_USER}")
+logger.info(f"SMTP_PASSWORD: {'***' if SMTP_PASSWORD else 'NON DÉFINI !!!'}")
+logger.info(f"INTERNAL_EMAIL: {INTERNAL_EMAIL}")
 
 CEMETERY_LABELS = {
     "fontaine_les_dijon": "Fontaine-lès-Dijon",
@@ -36,14 +48,29 @@ PARTICULARITY_LABELS = {
 }
 
 def send_email_smtp(to, subject, html_body):
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = subject
-    msg["From"] = f"PNT – Soins des tombes <{SMTP_USER}>"
-    msg["To"] = to
-    msg.attach(MIMEText(html_body, "html"))
-    with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT) as server:
-        server.login(SMTP_USER, SMTP_PASSWORD)
-        server.sendmail(SMTP_USER, to, msg.as_string())
+    logger.info(f"[SMTP] Tentative envoi vers: {to} | Sujet: {subject}")
+    logger.info(f"[SMTP] Connexion à {SMTP_HOST}:{SMTP_PORT} avec {SMTP_USER}")
+    try:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = f"PNT – Soins des tombes <{SMTP_USER}>"
+        msg["To"] = to
+        msg.attach(MIMEText(html_body, "html"))
+        with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT) as server:
+            logger.info(f"[SMTP] Connexion SSL établie")
+            server.login(SMTP_USER, SMTP_PASSWORD)
+            logger.info(f"[SMTP] Login réussi")
+            server.sendmail(SMTP_USER, to, msg.as_string())
+            logger.info(f"[SMTP] ✅ Email envoyé avec succès à {to}")
+    except smtplib.SMTPAuthenticationError as e:
+        logger.error(f"[SMTP] ❌ ERREUR AUTHENTIFICATION: {e}")
+        traceback.print_exc()
+    except smtplib.SMTPConnectError as e:
+        logger.error(f"[SMTP] ❌ ERREUR CONNEXION: {e}")
+        traceback.print_exc()
+    except Exception as e:
+        logger.error(f"[SMTP] ❌ ERREUR INCONNUE: {e}")
+        traceback.print_exc()
 
 def build_client_email(data):
     parts = data.get("particularities", [])
@@ -123,7 +150,7 @@ def build_client_email(data):
       <p style="color:#7a7267;font-size:14px;line-height:1.7;">
         Cordialement,<br />
         <strong style="color:#5a5752;">L'équipe PNT – Soins des tombes</strong><br />
-        <span style="font-size:12px;">📞 07 68 29 53 49 | ✉️ pnt.soins.tombes@gmail.com</span>
+        <span style="font-size:12px;">📞 07 68 29 53 49 | ✉️ contact@pnt-soinsdestombes.fr</span>
       </p>
     </div>
 
@@ -197,10 +224,13 @@ def send_client_email():
         return jsonify({}), 200
     data = request.json or {}
     to = data.get("to") or data.get("email", "")
+    logger.info(f"[API] /send-client-email reçu | destinataire: {to}")
     if not to:
+        logger.error("[API] ❌ Email manquant dans la requête")
         return jsonify({"error": "Email manquant"}), 400
     html = build_client_email(data)
     async_send(send_email_smtp, to, "✅ Votre demande de devis – PNT Soins des tombes", html)
+    logger.info(f"[API] Thread email client lancé pour {to}")
     return jsonify({"status": "sent"}), 200
 
 @app.route("/api/send-internal-email", methods=["OPTIONS", "POST"])
@@ -210,7 +240,9 @@ def send_internal_email():
     data = request.json or {}
     html = build_internal_email(data)
     name = f"{data.get('first_name','')} {data.get('last_name','')}".strip() or "Inconnu"
+    logger.info(f"[API] /send-internal-email reçu | client: {name} | destinataire interne: {INTERNAL_EMAIL}")
     async_send(send_email_smtp, INTERNAL_EMAIL, f"🔔 Nouvelle demande – {name}", html)
+    logger.info(f"[API] Thread email interne lancé vers {INTERNAL_EMAIL}")
     return jsonify({"status": "sent"}), 200
 
 @app.route("/api/send-verification-code", methods=["OPTIONS", "POST"])
