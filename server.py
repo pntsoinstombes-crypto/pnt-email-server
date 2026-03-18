@@ -73,8 +73,10 @@ def build_client_email(data):
     ) if parts else "<li>Aucune</li>"
 
     photos_html = ""
-    for url in (data.get("photo_urls") or []):
-        photos_html += f'<img src="{url}" style="max-width:200px;margin:4px;border-radius:8px;" />'
+    photo_urls = data.get("photo_urls") or []
+    if photo_urls:
+        for i, url in enumerate(photo_urls):
+            photos_html += f'<a href="{url}" style="display:inline-block;margin:4px;padding:8px 14px;background:#f5f0e8;border-radius:8px;font-size:13px;color:#4a7c59;text-decoration:none;border:1px solid #e8e4de;">📷 Photo {i+1}</a>'
 
     search_fee = data.get("search_fee", 0) or 0
     total = (data.get("price") or 0) + search_fee
@@ -89,9 +91,7 @@ def build_client_email(data):
     
     <!-- Header -->
     <div style="background:linear-gradient(135deg,#4a7c59,#3d6a4a);padding:40px 32px;text-align:center;">
-      <div style="width:60px;height:60px;background:rgba(255,255,255,0.2);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;margin-bottom:16px;">
-        <span style="color:white;font-size:20px;font-weight:700;">PNT</span>
-      </div>
+      <img src="https://media.base44.com/images/public/69b31e939eb62bc729748196/021f5cd7f_image.png" alt="PNT Logo" width="70" height="70" style="border-radius:50%;object-fit:cover;margin-bottom:16px;display:block;margin-left:auto;margin-right:auto;" />
       <h1 style="color:white;margin:0;font-size:24px;font-weight:300;letter-spacing:1px;">Votre demande a bien été reçue</h1>
       <p style="color:rgba(255,255,255,0.8);margin:8px 0 0;font-size:14px;">PNT – Soins des tombes</p>
     </div>
@@ -111,8 +111,8 @@ def build_client_email(data):
         <table style="width:100%;font-size:14px;margin-bottom:16px;">
           <tr><td style="padding:4px 0;color:#7a7267;width:160px;">Personne inhumée</td><td style="padding:4px 0;font-weight:600;color:#2d2926;">{data.get('deceased_name', '')}</td></tr>
           <tr><td style="padding:4px 0;color:#7a7267;">Cimetière</td><td style="padding:4px 0;font-weight:600;color:#2d2926;">{CEMETERY_LABELS.get(data.get('cemetery',''), data.get('cemetery',''))}</td></tr>
-          <tr><td style="padding:4px 0;color:#7a7267;">Emplacement</td><td style="padding:4px 0;color:#2d2926;">{data.get('plot_location','–')}</td></tr>
-          <tr><td style="padding:4px 0;color:#7a7267;">N° tombe</td><td style="padding:4px 0;color:#2d2926;">{data.get('tomb_number','–')}</td></tr>
+          <tr><td style="padding:4px 0;color:#7a7267;">Emplacement</td><td style="padding:4px 0;color:#2d2926;">{"<span style='color:#c4a35a;font-weight:600;'>Inconnu — recherche incluse (+5€)</span>" if data.get('plot_location','') in ('', 'RECHERCHE_NECESSAIRE') else data.get('plot_location')}</td></tr>
+          <tr><td style="padding:4px 0;color:#7a7267;">N° tombe</td><td style="padding:4px 0;color:#2d2926;">{"<span style='color:#c4a35a;font-weight:600;'>Inconnu — recherche incluse (+5€)</span>" if data.get('tomb_number','') in ('', 'RECHERCHE_NECESSAIRE') else data.get('tomb_number')}</td></tr>
         </table>
 
         <h3 style="color:#4a7c59;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:1px;margin:16px 0 8px;">Prestation</h3>
@@ -130,7 +130,7 @@ def build_client_email(data):
         <ul style="margin:0;padding-left:16px;font-size:14px;color:#5a5752;">{parts_html}</ul>
       </div>
 
-      {f'<div style="margin:16px 0;"><h3 style="color:#5a5752;font-size:14px;">Photos transmises :</h3>{photos_html}</div>' if photos_html else ''}
+      {f'<div style="margin:16px 0;"><p style="color:#5a5752;font-size:14px;font-weight:600;margin:0 0 8px;">Photos transmises :</p>{photos_html}</div>' if photos_html else ''}
 
       <!-- Info box -->
       <div style="border-left:4px solid #7a9e7e;background:#f0f7f2;padding:16px 20px;border-radius:0 8px 8px 0;margin:24px 0;">
@@ -187,8 +187,8 @@ def build_internal_email(data):
         <tr style="background:#f5f0e8;"><th colspan="2" style="text-align:left;padding:8px 12px;color:#4a7c59;font-size:12px;text-transform:uppercase;letter-spacing:1px;">Sépulture</th></tr>
         <tr><td style="padding:8px 12px;color:#7a7267;border-bottom:1px solid #f0ece6;">Défunt</td><td style="padding:8px 12px;font-weight:600;border-bottom:1px solid #f0ece6;">{data.get('deceased_name','')}</td></tr>
         <tr><td style="padding:8px 12px;color:#7a7267;border-bottom:1px solid #f0ece6;">Cimetière</td><td style="padding:8px 12px;border-bottom:1px solid #f0ece6;">{CEMETERY_LABELS.get(data.get('cemetery',''), data.get('cemetery',''))}</td></tr>
-        <tr><td style="padding:8px 12px;color:#7a7267;border-bottom:1px solid #f0ece6;">Emplacement</td><td style="padding:8px 12px;border-bottom:1px solid #f0ece6;">{data.get('plot_location','–')}</td></tr>
-        <tr><td style="padding:8px 12px;color:#7a7267;border-bottom:1px solid #f0ece6;">N° tombe</td><td style="padding:8px 12px;border-bottom:1px solid #f0ece6;">{data.get('tomb_number','–')}</td></tr>
+        <tr><td style="padding:8px 12px;color:#7a7267;border-bottom:1px solid #f0ece6;">Emplacement</td><td style="padding:8px 12px;border-bottom:1px solid #f0ece6;font-weight:600;color:{'#c4a35a' if data.get('plot_location','') in ('', 'RECHERCHE_NECESSAIRE') else '#2d2926'};">{"⚠️ Inconnu – à rechercher (+5€)" if data.get('plot_location','') in ('', 'RECHERCHE_NECESSAIRE') else data.get('plot_location')}</td></tr>
+        <tr><td style="padding:8px 12px;color:#7a7267;border-bottom:1px solid #f0ece6;">N° tombe</td><td style="padding:8px 12px;border-bottom:1px solid #f0ece6;font-weight:600;color:{'#c4a35a' if data.get('tomb_number','') in ('', 'RECHERCHE_NECESSAIRE') else '#2d2926'};">{"⚠️ Inconnu – à rechercher (+5€)" if data.get('tomb_number','') in ('', 'RECHERCHE_NECESSAIRE') else data.get('tomb_number')}</td></tr>
         <tr><td style="padding:8px 12px;color:#7a7267;border-bottom:1px solid #f0ece6;">Particularités</td><td style="padding:8px 12px;border-bottom:1px solid #f0ece6;">{parts_str}</td></tr>
 
         <tr style="background:#f5f0e8;"><th colspan="2" style="text-align:left;padding:8px 12px;color:#4a7c59;font-size:12px;text-transform:uppercase;letter-spacing:1px;">Prestation</th></tr>
@@ -257,7 +257,7 @@ def send_verification_code():
       <p style="color:#9e9b96;font-size:12px;">Ce code expire dans 10 minutes. Ne le partagez pas.</p>
     </div>
     """
-    async_send(send_email_smtp, to, "🔐 Code de vérification – PNT", html)
+    async_send(send_email_resend, to, "Code de vérification – PNT", html)
     return jsonify({"status": "sent"}), 200
 
 if __name__ == "__main__":
