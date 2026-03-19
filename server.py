@@ -115,12 +115,12 @@ def build_client_email(data):
     location_unknown = plot_loc in ('', 'RECHERCHE_NECESSAIRE')
     tomb_unknown = tomb_num in ('', 'RECHERCHE_NECESSAIRE')
 
-    emplacement_cell = "<span style='color:#c4a35a;font-weight:600;'>Inconnu — recherche incluse (+5€)</span>" if location_unknown else plot_loc
-    tomb_cell = "<span style='color:#c4a35a;font-weight:600;'>Inconnu — recherche incluse (+5€)</span>" if tomb_unknown else tomb_num
-    search_row = f'<tr><td style="padding:7px 0;color:#7a7267;border-bottom:1px solid #e8e4de;">Recherche d'emplacement</td><td style="padding:7px 0;font-weight:600;color:#c4a35a;border-bottom:1px solid #e8e4de;">+{search_fee}€</td></tr>' if search_fee else ""
+    emplacement_cell = "<span style='color:#c4a35a;font-weight:600;'>Inconnu &#8212; recherche incluse (+5&#8364;)</span>" if location_unknown else plot_loc
+    tomb_cell = "<span style='color:#c4a35a;font-weight:600;'>Inconnu &#8212; recherche incluse (+5&#8364;)</span>" if tomb_unknown else tomb_num
+    search_row = f'<tr><td style="padding:7px 0;color:#7a7267;border-bottom:1px solid #e8e4de;">Recherche d'emplacement</td><td style="padding:7px 0;font-weight:600;color:#c4a35a;border-bottom:1px solid #e8e4de;">+{search_fee}&#8364;</td></tr>' if search_fee else ""
 
     formula_label = FORMULA_LABELS.get(data.get('formula', ''), data.get('formula', ''))
-    formula_price_label = f"{base_price}€"
+    formula_price_label = f"{base_price}&#8364;"
 
     return f"""<!DOCTYPE html>
 <html lang="fr">
@@ -152,7 +152,7 @@ def build_client_email(data):
           <p style="margin:4px 0 0;font-size:11px;color:#9e9b96;text-transform:uppercase;letter-spacing:1px;">PNT – Soins des tombes</p>
         </div>
         <div style="text-align:right;">
-          <p style="margin:0;font-size:22px;font-weight:800;color:#4a7c59;">{total}€</p>
+          <p style="margin:0;font-size:22px;font-weight:800;color:#4a7c59;">{total}&#8364;</p>
           <p style="margin:2px 0 0;font-size:11px;color:#9e9b96;">Total estimé TTC</p>
         </div>
       </div>
@@ -188,7 +188,7 @@ def build_client_email(data):
         {search_row}
         <tr style="background:#edf7f1;border-radius:8px;">
           <td style="padding:10px 8px;font-weight:700;font-size:15px;color:#2d2926;border-radius:6px 0 0 6px;">TOTAL ESTIMÉ</td>
-          <td style="padding:10px 8px;font-weight:800;font-size:20px;color:#4a7c59;border-radius:0 6px 6px 0;">{total}€</td>
+          <td style="padding:10px 8px;font-weight:800;font-size:20px;color:#4a7c59;border-radius:0 6px 6px 0;">{total}&#8364;</td>
         </tr>
       </table>
     </div>
@@ -244,7 +244,7 @@ def build_internal_email(data):
 <div style="max-width:620px;margin:0 auto;background:white;border-radius:12px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,0.1);">
   <div style="background:#2d2926;padding:24px 28px;">
     <h1 style="color:white;margin:0;font-size:18px;">🔔 Nouvelle demande de devis</h1>
-    <p style="color:rgba(255,255,255,0.6);margin:4px 0 0;font-size:13px;">PNT – Panel Admin · Total estimé : <strong style="color:#7a9e7e;">{total}€</strong></p>
+    <p style="color:rgba(255,255,255,0.6);margin:4px 0 0;font-size:13px;">PNT – Panel Admin · Total estimé : <strong style="color:#7a9e7e;">{total}&#8364;</strong></p>
   </div>
   <div style="padding:28px;">
     <table style="width:100%;font-size:14px;border-collapse:collapse;">
@@ -257,17 +257,17 @@ def build_internal_email(data):
       <tr style="background:#f5f0e8;"><th colspan="2" style="text-align:left;padding:8px 12px;color:#4a7c59;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Sépulture</th></tr>
       <tr><td style="padding:8px 12px;color:#7a7267;border-bottom:1px solid #f0ece6;">Défunt</td><td style="padding:8px 12px;font-weight:600;border-bottom:1px solid #f0ece6;">{data.get('deceased_name','')}</td></tr>
       <tr><td style="padding:8px 12px;color:#7a7267;border-bottom:1px solid #f0ece6;">Cimetière</td><td style="padding:8px 12px;border-bottom:1px solid #f0ece6;">{CEMETERY_LABELS.get(data.get('cemetery',''), data.get('cemetery',''))}</td></tr>
-      <tr><td style="padding:8px 12px;color:#7a7267;border-bottom:1px solid #f0ece6;">Emplacement</td><td style="padding:8px 12px;border-bottom:1px solid #f0ece6;font-weight:600;color:{'#c4a35a' if location_unknown else '#2d2926'};">{"⚠️ INCONNU – à rechercher (+5€)" if location_unknown else plot_loc}</td></tr>
-      <tr><td style="padding:8px 12px;color:#7a7267;border-bottom:1px solid #f0ece6;">N° tombe</td><td style="padding:8px 12px;border-bottom:1px solid #f0ece6;font-weight:600;color:{'#c4a35a' if tomb_unknown else '#2d2926'};">{"⚠️ INCONNU – à rechercher (+5€)" if tomb_unknown else tomb_num}</td></tr>
+      <tr><td style="padding:8px 12px;color:#7a7267;border-bottom:1px solid #f0ece6;">Emplacement</td><td style="padding:8px 12px;border-bottom:1px solid #f0ece6;font-weight:600;color:{'#c4a35a' if location_unknown else '#2d2926'};">{"⚠️ INCONNU – a rechercher (+5&#8364;)" if location_unknown else plot_loc}</td></tr>
+      <tr><td style="padding:8px 12px;color:#7a7267;border-bottom:1px solid #f0ece6;">N° tombe</td><td style="padding:8px 12px;border-bottom:1px solid #f0ece6;font-weight:600;color:{'#c4a35a' if tomb_unknown else '#2d2926'};">{"⚠️ INCONNU – a rechercher (+5&#8364;)" if tomb_unknown else tomb_num}</td></tr>
       <tr><td style="padding:8px 12px;color:#7a7267;border-bottom:1px solid #f0ece6;">Particularités</td><td style="padding:8px 12px;border-bottom:1px solid #f0ece6;">{parts_str}</td></tr>
 
       <tr style="background:#f5f0e8;"><th colspan="2" style="text-align:left;padding:8px 12px;color:#4a7c59;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Prestation & Tarif</th></tr>
-      <tr><td style="padding:8px 12px;color:#7a7267;border-bottom:1px solid #f0ece6;">Formule</td><td style="padding:8px 12px;font-weight:600;border-bottom:1px solid #f0ece6;">{formula_label} ({base_price}€)</td></tr>
+      <tr><td style="padding:8px 12px;color:#7a7267;border-bottom:1px solid #f0ece6;">Formule</td><td style="padding:8px 12px;font-weight:600;border-bottom:1px solid #f0ece6;">{formula_label} ({base_price}&#8364;)</td></tr>
       <tr><td style="padding:8px 12px;color:#7a7267;border-bottom:1px solid #f0ece6;">Mois souhaité</td><td style="padding:8px 12px;font-weight:600;border-bottom:1px solid #f0ece6;">{data.get('reservation_date','Non renseigné')}</td></tr>
-      <tr><td style="padding:8px 12px;color:#7a7267;border-bottom:1px solid #f0ece6;">Frais recherche</td><td style="padding:8px 12px;border-bottom:1px solid #f0ece6;color:{'#c4a35a' if search_fee else '#9e9b96'};font-weight:{'600' if search_fee else '400'};">{f'+{search_fee}€' if search_fee else '—'}</td></tr>
+      <tr><td style="padding:8px 12px;color:#7a7267;border-bottom:1px solid #f0ece6;">Frais recherche</td><td style="padding:8px 12px;border-bottom:1px solid #f0ece6;color:{'#c4a35a' if search_fee else '#9e9b96'};font-weight:{'600' if search_fee else '400'};">{f'+{search_fee}&#8364;' if search_fee else '&#8212;'}</td></tr>
       <tr style="background:#e8f5ee;">
         <td style="padding:12px;font-weight:700;font-size:16px;">TOTAL</td>
-        <td style="padding:12px;font-weight:800;font-size:20px;color:#4a7c59;">{total}€</td>
+        <td style="padding:12px;font-weight:800;font-size:20px;color:#4a7c59;">{total}&#8364;</td>
       </tr>
     </table>
   </div>
@@ -310,8 +310,8 @@ def send_internal_email():
     search_fee = int(data.get("search_fee", 0) or 0)
     base_price = int(data.get("price") or FORMULA_PRICES.get(data.get("formula", ""), 0))
     total = base_price + search_fee
-    logger.info(f"[API] /send-internal-email reçu | client: {name} | total: {total}€ | destinataire interne: {INTERNAL_EMAIL}")
-    async_send(send_email_resend, INTERNAL_EMAIL, f"🔔 Nouvelle demande – {name} – {total}€", html)
+    logger.info(f"[API] /send-internal-email recu | client: {name} | total: {total} EUR | destinataire interne: {INTERNAL_EMAIL}")
+    async_send(send_email_resend, INTERNAL_EMAIL, f"Nouvelle demande - {name} - {total} EUR", html)
     return jsonify({"status": "sent"}), 200
 
 @app.route("/api/send-mailing", methods=["OPTIONS", "POST"])
