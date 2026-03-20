@@ -117,7 +117,7 @@ def build_client_email(data):
 
     emplacement_cell = "<span style='color:#c4a35a;font-weight:600;'>Inconnu &#8212; recherche incluse (+5&#8364;)</span>" if location_unknown else plot_loc
     tomb_cell = "<span style='color:#c4a35a;font-weight:600;'>Inconnu &#8212; recherche incluse (+5&#8364;)</span>" if tomb_unknown else tomb_num
-    search_row = f'<tr><td style="padding:7px 0;color:#7a7267;border-bottom:1px solid #e8e4de;">Recherche d'emplacement</td><td style="padding:7px 0;font-weight:600;color:#c4a35a;border-bottom:1px solid #e8e4de;">+{search_fee}&#8364;</td></tr>' if search_fee else ""
+    search_row = (f'<tr><td style="padding:7px 0;color:#7a7267;border-bottom:1px solid #e8e4de;">Recherche emplacement</td><td style="padding:7px 0;font-weight:600;color:#c4a35a;border-bottom:1px solid #e8e4de;">+{search_fee}&#8364;</td></tr>' if search_fee else "")
 
     formula_label = FORMULA_LABELS.get(data.get('formula', ''), data.get('formula', ''))
     formula_price_label = f"{base_price}&#8364;"
